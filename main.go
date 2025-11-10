@@ -29,13 +29,13 @@ func main() {
 	apiCfg := apiConfig{fileserverHits: atomic.Int32{}}
 	mux := http.NewServeMux()
 	mux.Handle("/app/", apiCfg.middlewareMetricsInc(http.StripPrefix("/app", http.FileServer(http.Dir(".")))))
-	mux.HandleFunc("GET /healthz", func(w http.ResponseWriter, req *http.Request) {
+	mux.HandleFunc("GET /api/healthz", func(w http.ResponseWriter, req *http.Request) {
 		w.Header().Set("Content-Type", "text/plain; charset=utf-8")
 		w.WriteHeader(http.StatusOK)
 		w.Write([]byte("OK"))
 	})
-	mux.HandleFunc("GET /metrics", apiCfg.middlewareMetricsGet)
-	mux.HandleFunc("POST /reset", apiCfg.middlewareMetricsReset)
+	mux.HandleFunc("GET /api/metrics", apiCfg.middlewareMetricsGet)
+	mux.HandleFunc("POST /api/reset", apiCfg.middlewareMetricsReset)
 	server := http.Server{
 		Addr:    ":8080",
 		Handler: mux,
