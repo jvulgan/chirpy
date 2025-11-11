@@ -3,7 +3,6 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"log"
 	"net/http"
 	"sync/atomic"
 )
@@ -41,51 +40,22 @@ func validateChirp(w http.ResponseWriter, req *http.Request) {
     }
     var p params
 
-    type response struct {
-        Error string `json:"error"`
-        Valid bool `json:"valid"`
-    }
-
-    // decode request body
     decoder := json.NewDecoder(req.Body)
     if err := decoder.Decode(&p); err != nil {
-        respBody := response{Valid: false, Error: fmt.Sprintf("%v", err)}
-        dat, err := json.Marshal(respBody)
-        if err != nil {
-            log.Printf("Error while marshalling response %s", err)
-            w.WriteHeader(500)
-            return
-        }
-        w.Header().Set("Content-Type", "application/json")
-        w.WriteHeader(200)
-        w.Write(dat)
+        respondWithError(w, http.StatusInternalServerError, "Could not decode parameters", err)
         return
     }
 
     if len(p.Body) > 140 {
-        respBody := response{Valid: false, Error: "Chirp is too long"}
-        dat, err := json.Marshal(respBody)
-        if err != nil {
-            log.Printf("Error while marshalling response %s", err)
-            w.WriteHeader(500)
-            return
-        }
-        w.Header().Set("Content-Type", "application/json")
-        w.WriteHeader(400)
-        w.Write(dat)
+        respondWithError(w, http.StatusBadRequest, "Chirp is too long", nil)
         return
     }
 
-    respBody := response{Valid: true, Error: ""}
-    dat, err := json.Marshal(respBody)
-    if err != nil {
-        log.Printf("Error while marshalling response %s", err)
-        w.WriteHeader(500)
-        return
+    type response struct {
+        Valid bool `json:"valid"`
     }
-    w.Header().Set("Content-Type", "application/json")
-    w.WriteHeader(200)
-    w.Write(dat)
+    respBody := response{Valid: true}
+    respondWithJSON(w, http.StatusOK, respBody)
 }
 
 func main() {
