@@ -52,9 +52,9 @@ func validateChirp(w http.ResponseWriter, req *http.Request) {
     }
 
     type response struct {
-        Valid bool `json:"valid"`
+        CleanedBody string `json:"cleaned_body"`
     }
-    respBody := response{Valid: true}
+    respBody := response{CleanedBody: replaceBadWords(p.Body)}
     respondWithJSON(w, http.StatusOK, respBody)
 }
 
