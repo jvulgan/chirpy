@@ -33,6 +33,7 @@ func main() {
 		w.Write([]byte("OK"))
 	})
 	mux.HandleFunc("POST /api/chirps", apiCfg.addChirp)
+	mux.HandleFunc("GET /api/chirps", apiCfg.getChirps)
 	mux.HandleFunc("POST /api/users", apiCfg.addUser)
 	// admin api handlers
 	mux.HandleFunc("GET /admin/metrics", apiCfg.middlewareMetricsGet)
