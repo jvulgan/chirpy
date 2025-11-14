@@ -12,7 +12,7 @@ import (
 const jwtExpires = time.Hour
 const refreshTokenExpires = time.Hour * 24 * 60
 
-func (cfg *apiConfig) Login(w http.ResponseWriter, req *http.Request) {
+func (cfg *apiConfig) handleLogin(w http.ResponseWriter, req *http.Request) {
 	type params struct {
 		Email    string `json:"email"`
 		Password string `json:"password"`
@@ -68,7 +68,7 @@ func (cfg *apiConfig) Login(w http.ResponseWriter, req *http.Request) {
 
 }
 
-func (cfg *apiConfig) Refresh(w http.ResponseWriter, req *http.Request) {
+func (cfg *apiConfig) handleRefresh(w http.ResponseWriter, req *http.Request) {
 	token, err := auth.GetBearerToken(req.Header)
 	if err != nil {
 		respondWithError(w, http.StatusUnauthorized, "No Bearer token provided", err)
@@ -91,7 +91,7 @@ func (cfg *apiConfig) Refresh(w http.ResponseWriter, req *http.Request) {
 	respondWithJSON(w, http.StatusOK, r)
 }
 
-func (cfg *apiConfig) Revoke(w http.ResponseWriter, req *http.Request) {
+func (cfg *apiConfig) handleRevoke(w http.ResponseWriter, req *http.Request) {
 	token, err := auth.GetBearerToken(req.Header)
 	if err != nil {
 		respondWithError(w, http.StatusUnauthorized, "No Bearer token provided", err)
