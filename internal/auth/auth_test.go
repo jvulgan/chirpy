@@ -1,6 +1,9 @@
 package auth
 
-import "testing"
+import (
+	"net/http"
+	"testing"
+)
 
 func TestHashPassword(t *testing.T) {
     cases := []struct{
@@ -37,4 +40,52 @@ func TestHashPassword(t *testing.T) {
             }
         })
     }
+}
+
+func TestGetBearerToken(t *testing.T) {
+    cases := []struct{
+        name string
+        header http.Header
+        wantToken string
+        wantErr bool
+    } {
+        {
+            name: "valid auth header with bearer token",
+            header: http.Header{"Authorization": []string{"Bearer sometoken"}},
+            wantToken: "sometoken",
+            wantErr: false,
+        },
+        {
+            name: "empty headers",
+            header: http.Header{},
+            wantToken: "",
+            wantErr: true,
+        },
+        {
+            name: "no auth header",
+            header: http.Header{"Non auth header": []string{"value"}},
+            wantToken: "",
+            wantErr: true,
+        },
+        {
+            name: "no bearer token",
+            header: http.Header{"Authorization": []string{"sometoken"}},
+            wantToken: "",
+            wantErr: true,
+        },
+    }
+    for _, c := range cases {
+        t.Run(c.name, func (t *testing.T) {
+            gotToken, gotErr := GetBearerToken(c.header)
+            if (gotErr != nil) != c.wantErr {
+                t.Errorf("GetBearerToken() error: %v, wantErr %v", gotErr, c.wantErr)
+                return
+            }
+            if gotToken != c.wantToken {
+                t.Errorf("GetBearerToken() got token: %s, wantToken: %s", gotToken, c.wantToken)
+                return
+            }
+        })
+    }
+
 }

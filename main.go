@@ -16,13 +16,19 @@ func main() {
 	godotenv.Load()
 	dbURL := os.Getenv("DB_URL")
 	platform := os.Getenv("PLATFORM")
+	jwtSecret := os.Getenv("JWT_SECRET")
 	db, err := sql.Open("postgres", dbURL)
 	if err != nil {
 		log.Printf("err connecting to postgres: %s", err)
 		return
 	}
 	dbQueries := database.New(db)
-	apiCfg := apiConfig{fileserverHits: atomic.Int32{}, dbQueries: *dbQueries, platform: platform}
+	apiCfg := apiConfig{
+		fileserverHits: atomic.Int32{},
+		dbQueries:      *dbQueries,
+		platform:       platform,
+		jwtSecret:      jwtSecret,
+	}
 	mux := http.NewServeMux()
 	// app handler
 	mux.Handle("/app/", apiCfg.middlewareMetricsInc(http.StripPrefix("/app", http.FileServer(http.Dir(".")))))
