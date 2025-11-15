@@ -54,3 +54,51 @@ func (cfg *apiConfig) addUser(w http.ResponseWriter, req *http.Request) {
 	}
 	respondWithJSON(w, http.StatusCreated, user)
 }
+
+func (cfg *apiConfig) updateUser(w http.ResponseWriter, req *http.Request) {
+	bearerToken, err := auth.GetBearerToken(req.Header)
+	if err != nil {
+		respondWithError(w, http.StatusUnauthorized, "Unauthorized", err)
+		return
+	}
+	userID, err := auth.ValidateJWT(bearerToken, cfg.jwtSecret)
+	if err != nil {
+		respondWithError(w, http.StatusUnauthorized, "Unauthorized", err)
+		return
+	}
+
+	type params struct {
+		Email    string `json:"email"`
+		Password string `json:"password"`
+	}
+	var p params
+
+	decoder := json.NewDecoder(req.Body)
+	if err := decoder.Decode(&p); err != nil {
+		respondWithError(w, http.StatusInternalServerError, "Could not decode parameters", err)
+		return
+	}
+
+	hash, err := auth.HashPassword(p.Password)
+	if err != nil {
+		respondWithError(w, http.StatusInternalServerError, "Error while hashing password", err)
+		return
+	}
+
+	updateUserParams := database.UpdateUserEmailPwdParams{
+		Email:          p.Email,
+		HashedPassword: hash,
+		ID:             userID,
+	}
+	u, err := cfg.dbQueries.UpdateUserEmailPwd(req.Context(), updateUserParams)
+	if err != nil {
+		respondWithError(w, http.StatusInternalServerError, "Error updating db records", err)
+		return
+	}
+	respondWithJSON(w, http.StatusOK, User{
+		ID:        u.ID,
+		CreatedAt: u.CreatedAt,
+		UpdatedAt: u.UpdatedAt,
+		Email:     u.Email,
+	})
+}
