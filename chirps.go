@@ -103,3 +103,36 @@ func (cfg *apiConfig) getChirp(w http.ResponseWriter, req *http.Request) {
 		UserID:    ch.UserID,
 	})
 }
+
+func (cfg *apiConfig) deleteChirp(w http.ResponseWriter, req *http.Request) {
+	chirpID, err := uuid.Parse(req.PathValue("chirpID"))
+	if err != nil {
+		respondWithError(w, http.StatusInternalServerError, "Invalid chirp_id provided", err)
+		return
+	}
+
+	bearerToken, err := auth.GetBearerToken(req.Header)
+	if err != nil {
+		respondWithError(w, http.StatusUnauthorized, "Unauthorized", err)
+		return
+	}
+	userID, err := auth.ValidateJWT(bearerToken, cfg.jwtSecret)
+	if err != nil {
+		respondWithError(w, http.StatusUnauthorized, "Unauthorized", err)
+		return
+	}
+	ch, err := cfg.dbQueries.GetChirp(req.Context(), uuid.UUID(chirpID))
+	if err != nil {
+		respondWithError(w, http.StatusNotFound, "Could not get chirp", err)
+		return
+	}
+	if ch.UserID != userID {
+		respondWithError(w, http.StatusForbidden, "Unauthorized to delete chirps of other users", err)
+		return
+	}
+	if err := cfg.dbQueries.DeleteChirp(req.Context(), chirpID); err != nil {
+		respondWithError(w, http.StatusInternalServerError, "Could not delete chirp", err)
+		return
+	}
+	respondWithJSON(w, http.StatusNoContent, struct{}{})
+}
