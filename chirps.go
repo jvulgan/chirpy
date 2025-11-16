@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"net/http"
+	"sort"
 	"time"
 
 	"github.com/google/uuid"
@@ -82,6 +83,14 @@ func (cfg *apiConfig) getChirps(w http.ResponseWriter, req *http.Request) {
 	if dbErr != nil {
 		respondWithError(w, http.StatusInternalServerError, "Could not get chirps", dbErr)
 		return
+	}
+	order := req.URL.Query().Get("sort")
+	if order == "desc" {
+		// only handle desc, "asc" is default sorting from db query
+		sort.Slice(
+			dbChirps,
+			func(i, j int) bool { return dbChirps[i].CreatedAt.After(dbChirps[j].CreatedAt) },
+		)
 	}
 	chirps := []Chirp{}
 	for _, ch := range dbChirps {
