@@ -7,7 +7,6 @@ package database
 
 import (
 	"context"
-	"time"
 
 	"github.com/google/uuid"
 )
@@ -21,7 +20,7 @@ VALUES (
     $1,
     $2
 )
-RETURNING id, created_at, updated_at, email
+RETURNING id, created_at, updated_at, email, hashed_password
 `
 
 type CreateUserParams struct {
@@ -29,21 +28,15 @@ type CreateUserParams struct {
 	HashedPassword string
 }
 
-type CreateUserRow struct {
-	ID        uuid.UUID
-	CreatedAt time.Time
-	UpdatedAt time.Time
-	Email     string
-}
-
-func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (CreateUserRow, error) {
+func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, error) {
 	row := q.db.QueryRowContext(ctx, createUser, arg.Email, arg.HashedPassword)
-	var i CreateUserRow
+	var i User
 	err := row.Scan(
 		&i.ID,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.Email,
+		&i.HashedPassword,
 	)
 	return i, err
 }
@@ -79,7 +72,7 @@ const updateUserEmailPwd = `-- name: UpdateUserEmailPwd :one
 UPDATE users
 SET email = $1, hashed_password = $2, updated_at = NOW()
 WHERE id = $3
-RETURNING id, created_at, updated_at, email
+RETURNING id, created_at, updated_at, email, hashed_password
 `
 
 type UpdateUserEmailPwdParams struct {
@@ -88,21 +81,15 @@ type UpdateUserEmailPwdParams struct {
 	ID             uuid.UUID
 }
 
-type UpdateUserEmailPwdRow struct {
-	ID        uuid.UUID
-	CreatedAt time.Time
-	UpdatedAt time.Time
-	Email     string
-}
-
-func (q *Queries) UpdateUserEmailPwd(ctx context.Context, arg UpdateUserEmailPwdParams) (UpdateUserEmailPwdRow, error) {
+func (q *Queries) UpdateUserEmailPwd(ctx context.Context, arg UpdateUserEmailPwdParams) (User, error) {
 	row := q.db.QueryRowContext(ctx, updateUserEmailPwd, arg.Email, arg.HashedPassword, arg.ID)
-	var i UpdateUserEmailPwdRow
+	var i User
 	err := row.Scan(
 		&i.ID,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.Email,
+		&i.HashedPassword,
 	)
 	return i, err
 }
