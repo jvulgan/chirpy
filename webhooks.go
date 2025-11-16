@@ -5,9 +5,19 @@ import (
 	"net/http"
 
 	"github.com/google/uuid"
+	"github.com/jvulgan/chirpy/internal/auth"
 )
 
 func (cfg *apiConfig) handleWebhook(w http.ResponseWriter, req *http.Request) {
+	token, err := auth.GetAPIKey(req.Header)
+	if err != nil {
+		respondWithError(w, http.StatusUnauthorized, "No ApiKey provided", err)
+		return
+	}
+	if token != cfg.polkaKey {
+		respondWithError(w, http.StatusUnauthorized, "Invalid ApiKey provided", err)
+		return
+	}
 	type params struct {
 		Event string `json:"event"`
 		Data  struct {
